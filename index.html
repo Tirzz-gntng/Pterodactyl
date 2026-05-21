@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tirzz Store – Auto Order Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020812;
+    --surface: #050f1e;
+    --card: #081424;
+    --border: #0d2a4a;
+    --accent: #00d4ff;
+    --accent2: #7b2fff;
+    --accent3: #ff2d78;
+    --gold: #ffd700;
+    --text: #e0f0ff;
+    --muted: #4a7a9b;
+    --success: #00ff88;
+    --glow: 0 0 20px rgba(0,212,255,0.4);
+    --glow2: 0 0 30px rgba(123,47,255,0.5);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── STARFIELD ── */
+  #stars {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(0,212,255,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 80% 80%, rgba(123,47,255,0.08) 0%, transparent 60%),
+      var(--bg);
+    pointer-events: none;
+  }
+  #stars::before, #stars::after {
+    content:'';
+    position:absolute;
+    inset:0;
+    background-image:
+      radial-gradient(1px 1px at 10% 20%, #fff 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 50%, rgba(0,212,255,0.8) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 60% 15%, #fff 0%, transparent 100%),
+      radial-gradient(1px 1px at 80% 40%, rgba(123,47,255,0.7) 0%, transparent 100%),
+      radial-gradient(1px 1px at 45% 70%, #fff 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 65%, rgba(0,212,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 5% 85%, #fff 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 70% 90%, rgba(255,45,120,0.6) 0%, transparent 100%);
+    background-size: 400px 400px;
+    animation: twinkle 4s infinite alternate;
+  }
+  #stars::after { animation-delay: 2s; background-size: 600px 600px; opacity:.6; }
+  @keyframes twinkle { 0%{opacity:.5} 100%{opacity:1} }
+
+  /* ── GRID OVERLAY ── */
+  .grid-bg {
+    position: fixed; inset:0; z-index:0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative; z-index: 10;
+    padding: 0 40px;
+    background: linear-gradient(180deg, rgba(0,212,255,0.05) 0%, transparent 100%);
+    border-bottom: 1px solid rgba(0,212,255,0.15);
+    display: flex; align-items: center; justify-content: space-between;
+    height: 80px;
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .logo-icon {
+    width: 46px; height: 46px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    box-shadow: var(--glow);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{box-shadow: 0 0 15px rgba(0,212,255,0.4)} 50%{box-shadow: 0 0 35px rgba(0,212,255,0.8)} }
+
+  .logo-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
+    background-size: 200%;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    animation: shimmer 3s linear infinite;
+  }
+  @keyframes shimmer { 0%{background-position:0%} 100%{background-position:200%} }
+
+  .logo-sub {
+    font-size: 10px; color: var(--muted); letter-spacing: 3px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .header-status {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px; color: var(--success);
+  }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--success);
+    animation: blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative; z-index: 5;
+    text-align: center;
+    padding: 60px 20px 40px;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.3);
+    color: var(--accent);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    padding: 6px 18px;
+    border-radius: 100px;
+    letter-spacing: 3px;
+    margin-bottom: 20px;
+    animation: fadeDown 0.6s ease;
+  }
+  .hero-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(32px, 5vw, 64px);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    animation: fadeDown 0.7s ease;
+  }
+  .hero-title .hl { color: var(--accent); text-shadow: 0 0 30px rgba(0,212,255,0.5); }
+  .hero-title .hl2 { color: var(--accent2); }
+  .hero-sub {
+    font-size: 17px; color: var(--muted); max-width: 500px; margin: 0 auto;
+    line-height: 1.6; animation: fadeDown 0.8s ease;
+  }
+  @keyframes fadeDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── STATS BAR ── */
+  .stats-bar {
+    position: relative; z-index: 5;
+    display: flex; justify-content: center; gap: 30px; flex-wrap: wrap;
+    padding: 20px 40px 40px;
+  }
+  .stat {
+    text-align: center;
+    background: rgba(0,212,255,0.04);
+    border: 1px solid rgba(0,212,255,0.12);
+    border-radius: 12px;
+    padding: 16px 28px;
+    min-width: 130px;
+    transition: all .3s;
+  }
+  .stat:hover { border-color: var(--accent); box-shadow: var(--glow); transform: translateY(-3px); }
+  .stat-num {
+    font-family: 'Orbitron', monospace;
+    font-size: 26px; font-weight: 700;
+    color: var(--accent);
+  }
+  .stat-label { font-size: 12px; color: var(--muted); letter-spacing: 1px; }
+
+  /* ── MAIN LAYOUT ── */
+  main {
+    position: relative; z-index: 5;
+    max-width: 1100px; margin: 0 auto;
+    padding: 0 24px 60px;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 28px;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .3s;
+  }
+  .card::before {
+    content:''; position:absolute; inset:0;
+    background: linear-gradient(135deg, rgba(0,212,255,0.03) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .card:hover { border-color: rgba(0,212,255,0.3); }
+
+  .card-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 24px;
+  }
+  .card-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .card-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 15px; font-weight: 700;
+    color: var(--text);
+    letter-spacing: 1px;
+  }
+  .card-subtitle { font-size: 12px; color: var(--muted); }
+
+  /* ── FORM ── */
+  .form-group { margin-bottom: 20px; }
+  label {
+    display: block;
+    font-size: 12px; font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+  input, select, textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 16px;
+    color: var(--text);
+    font-size: 15px;
+    font-family: 'Rajdhani', sans-serif;
+    transition: all .25s;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    background: rgba(0,212,255,0.04);
+    box-shadow: 0 0 0 3px rgba(0,212,255,0.08);
+  }
+  select option { background: #0a1628; }
+  input::placeholder { color: var(--muted); }
+
+  /* ── PACKAGES ── */
+  .packages { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pkg {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all .25s;
+    position: relative;
+    background: rgba(255,255,255,0.02);
+    user-select: none;
+  }
+  .pkg:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .pkg.active {
+    border-color: var(--accent);
+    background: rgba(0,212,255,0.08);
+    box-shadow: var(--glow);
+  }
+  .pkg.featured { border-color: var(--gold); }
+  .pkg.featured.active { background: rgba(255,215,0,0.08); box-shadow: 0 0 20px rgba(255,215,0,0.3); }
+
+  .pkg-badge {
+    position: absolute; top: -10px; right: 12px;
+    font-size: 9px; letter-spacing: 1px; font-weight: 700;
+    padding: 3px 10px; border-radius: 100px;
+  }
+  .pkg-badge.hot { background: var(--accent3); color: #fff; }
+  .pkg-badge.best { background: var(--gold); color: #000; }
+
+  .pkg-name { font-weight: 700; font-size: 14px; color: var(--text); margin-bottom: 4px; }
+  .pkg-ram { font-family: 'Orbitron', monospace; font-size: 20px; font-weight: 900; color: var(--accent); }
+  .pkg-ram.gold { color: var(--gold); }
+  .pkg-specs { font-size: 12px; color: var(--muted); margin: 6px 0; line-height: 1.5; }
+  .pkg-price { font-size: 17px; font-weight: 700; color: var(--success); }
+
+  /* ── OS SELECTOR ── */
+  .os-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .os-btn {
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 8px;
+    cursor: pointer; transition: all .2s;
+    background: rgba(255,255,255,0.02);
+    text-align: center; font-size: 13px;
+    color: var(--muted);
+    user-select: none;
+  }
+  .os-btn:hover { border-color: var(--accent2); color: var(--text); }
+  .os-btn.active {
+    border-color: var(--accent2); color: var(--accent2);
+    background: rgba(123,47,255,0.08);
+    box-shadow: 0 0 15px rgba(123,47,255,0.2);
+  }
+  .os-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+
+  /* ── BUTTON ── */
+  .btn {
+    width: 100%; padding: 16px;
+    border: none; border-radius: 12px;
+    cursor: pointer; font-family: 'Orbitron', sans-serif;
+    font-size: 14px; font-weight: 700; letter-spacing: 2px;
+    transition: all .3s; position: relative; overflow: hidden;
+  }
+  .btn-primary {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(0,212,255,0.3);
+  }
+  .btn-primary:hover {
+    box-shadow: 0 6px 30px rgba(0,212,255,0.5);
+    transform: translateY(-2px);
+  }
+  .btn-primary:active { transform: translateY(0); }
+  .btn::after {
+    content:'';
+    position:absolute; top:0; left:-100%; width:60%; height:100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left .5s;
+  }
+  .btn:hover::after { left: 150%; }
+
+  /* ── SIDEBAR ── */
+  .sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+  /* ── PAYMENT CARD ── */
+  .payment-card {
+    background: linear-gradient(135deg, #0a1f35, #0d1a2e);
+    border: 1px solid rgba(0,212,255,0.25);
+    border-radius: 20px;
+    padding: 28px;
+    position: relative; overflow: hidden;
+  }
+  .payment-card::before {
+    content:'';
+    position:absolute; top:-50px; right:-50px;
+    width:180px; height:180px;
+    background: radial-gradient(circle, rgba(0,212,255,0.12) 0%, transparent 70%);
+    border-radius:50%;
+  }
+
+  .dana-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: linear-gradient(135deg, #118EEA, #0056B3);
+    color: #fff; border-radius: 12px;
+    padding: 10px 18px; margin-bottom: 18px;
+    font-weight: 700; font-size: 18px;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 20px rgba(17,142,234,0.4);
+  }
+
+  .dana-number {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 22px; letter-spacing: 3px;
+    color: var(--accent);
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; transition: all .25s;
+  }
+  .dana-number:hover { border-color: var(--accent); box-shadow: var(--glow); }
+  .copy-icon { font-size: 16px; opacity: .6; }
+  .dana-name { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+
+  .pay-steps { list-style: none; }
+  .pay-steps li {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 13px; color: var(--muted); line-height: 1.5;
+  }
+  .pay-steps li:last-child { border: none; }
+  .step-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff; font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+
+  /* ── SUMMARY CARD ── */
+  .summary-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 14px;
+  }
+  .summary-row:last-child { border: none; }
+  .summary-row .label { color: var(--muted); }
+  .summary-row .val { color: var(--text); font-weight: 600; }
+  .summary-row .val.price { color: var(--success); font-family: 'Orbitron', monospace; font-size: 16px; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 30px; right: 30px;
+    background: var(--success); color: #000;
+    padding: 12px 22px; border-radius: 10px;
+    font-weight: 700; font-size: 14px;
+    z-index: 999; transform: translateY(100px); opacity: 0;
+    transition: all .4s cubic-bezier(.175,.885,.32,1.275);
+    pointer-events: none;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 999;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity .3s;
+  }
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--card); border: 1px solid rgba(0,212,255,0.3);
+    border-radius: 24px; padding: 40px; max-width: 460px; width: 90%;
+    transform: scale(0.9); transition: transform .3s;
+    text-align: center; position: relative;
+  }
+  .modal-overlay.show .modal { transform: scale(1); }
+  .modal-icon { font-size: 56px; margin-bottom: 16px; }
+  .modal-title { font-family: 'Orbitron', sans-serif; font-size: 20px; margin-bottom: 10px; }
+  .modal-id {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 24px; color: var(--accent);
+    background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 10px; padding: 12px 20px; margin: 16px 0;
+    letter-spacing: 3px;
+  }
+  .modal-text { font-size: 14px; color: var(--muted); line-height: 1.7; margin-bottom: 24px; }
+  .modal-close {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    color: #fff; border: none; border-radius: 10px;
+    padding: 12px 32px; cursor: pointer;
+    font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 700;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    position: relative; z-index: 5;
+    text-align: center; padding: 30px;
+    border-top: 1px solid var(--border);
+    font-size: 13px; color: var(--muted);
+  }
+  footer span { color: var(--accent); }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width: 800px) {
+    main { grid-template-columns: 1fr; }
+    .packages { grid-template-columns: 1fr 1fr; }
+    header { padding: 0 20px; }
+    .stats-bar { gap: 12px; }
+  }
+  @media(max-width: 480px) {
+    .packages { grid-template-columns: 1fr; }
+    .os-grid { grid-template-columns: repeat(3,1fr); }
+  }
+
+  /* ── ANIMATIONS ── */
+  .card, .payment-card { animation: fadeUp .5s ease both; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+  .card:nth-child(2) { animation-delay: .1s; }
+  .sidebar .card:nth-child(1) { animation-delay: .15s; }
+  .sidebar .card:nth-child(2) { animation-delay: .2s; }
+</style>
+</head>
+<body>
+<div id="stars"></div>
+<div class="grid-bg"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">🦅</div>
+    <div>
+      <div class="logo-text">TIRZZ STORE</div>
+      <div class="logo-sub">PTERODACTYL AUTO ORDER</div>
+    </div>
+  </div>
+  <div class="header-status">
+    <div class="status-dot"></div>
+    SISTEM AKTIF
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">⚡ AUTO DEPLOY · 24/7 ONLINE · INSTANT AKTIF</div>
+  <h1 class="hero-title">
+    Order Server<br>
+    <span class="hl">Pterodactyl</span> <span class="hl2">Instan</span>
+  </h1>
+  <p class="hero-sub">Server VPS game & bot mu aktif dalam hitungan menit. Tanpa ribet, langsung jadi.</p>
+</div>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat">
+    <div class="stat-num">1.2K+</div>
+    <div class="stat-label">PESANAN SELESAI</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">99.9%</div>
+    <div class="stat-label">UPTIME</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">&lt; 5 Min</div>
+    <div class="stat-label">PROSES AKTIF</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">24/7</div>
+    <div class="stat-label">SUPPORT</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main>
+  <!-- LEFT: ORDER FORM -->
+  <div>
+    <!-- Package Selection -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-header">
+        <div class="card-icon">📦</div>
+        <div>
+          <div class="card-title">PILIH PAKET SERVER</div>
+          <div class="card-subtitle">Klik paket yang sesuai kebutuhanmu</div>
+        </div>
+      </div>
+      <div class="packages">
+        <div class="pkg" onclick="selectPkg(this,'Starter','1 GB','1 vCPU · 1 GB SSD','Rp 1000')" data-name="Starter" data-price="1000">
+          <div class="pkg-name">Starter</div>
+          <div class="pkg-ram">1 GB</div>
+          <div class="pkg-specs">1 vCPU · 1 GB SSD<br>1 Port · Shared IP</div>
+          <div class="pkg-price">Rp 1000<small>/bulan</small></div>
+        </div>
+        <div class="pkg" onclick="selectPkg(this,'Basic','5 GB','2 vCPU · 5 GB SSD','Rp 7.000')" data-name="Basic" data-price="7000">
+          <div class="pkg-badge hot">🔥 HOT</div>
+          <div class="pkg-name">Basic</div>
+          <div class="pkg-ram">5 GB</div>
+          <div class="pkg-specs">2 vCPU · 5 GB SSD<br>2 Port · Shared IP</div>
+          <div class="pkg-price">Rp 7.000<small>/bulan</small></div>
+        </div>
+        <div class="pkg featured" onclick="selectPkg(this,'Pro','10 GB','10 vCPU · 10 GB SSD','Rp 11000')" data-name="Pro" data-price="11000">
+          <div class="pkg-badge best">⭐ BEST</div>
+          <div class="pkg-name">Pro</div>
+          <div class="pkg-ram gold">10 GB</div>
+          <div class="pkg-specs">10 vCPU · 10 GB SSD<br>3 Port · Shared IP</div>
+          <div class="pkg-price">Rp 11000<small>/bulan</small></div>
+        </div>
+        <div class="pkg" onclick="selectPkg(this,'Ultimate','UNLIMITED','UNLIMITED vCPU · UNLIMITED SSD','Rp 15.000')" data-name="Ultimate" data-price="15000">
+          <div class="pkg-name">Ultimate</div>
+          <div class="pkg-ram">UNLIMITED</div>
+          <div class="pkg-specs">UNLIMITED vCPU · UNLIMITED SSD<br>5 Port · Dedicated IP</div>
+          <div class="pkg-price">Rp 15.000<small>/bulan</small></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Form -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">📝</div>
+        <div>
+          <div class="card-title">DETAIL ORDER</div>
+          <div class="card-subtitle">Isi data dengan benar</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>NAMA LENGKAP</label>
+        <input type="text" id="nama" placeholder="Contoh: Tirzz Store" />
+      </div>
+
+      <div class="form-group">
+        <label>NOMOR WHATSAPP</label>
+        <input type="text" id="wa" placeholder="628xxxxxxxxxx" />
+      </div>
+
+      <div class="form-group">
+        <label>EMAIL PTERODACTYL</label>
+        <input type="email" id="email" placeholder="email@example.com" />
+      </div>
+
+      <div class="form-group">
+        <label>NAMA SERVER</label>
+        <input type="text" id="serverName" placeholder="Contoh: Tirzz Server" />
+      </div>
+
+      <div class="form-group">
+        <label>PILIH SISTEM OPERASI / EGG</label>
+        <div class="os-grid">
+          <div class="os-btn" onclick="selectOS(this,'Node.js')">
+            <span class="os-icon">🟢</span>Node.js
+          </div>
+          <div class="os-btn" onclick="selectOS(this,'Python')">
+            <span class="os-icon">🐍</span>Python
+          </div>
+          <div class="os-btn" onclick="selectOS(this,'Java')">
+            <span class="os-icon">☕</span>Java
+          </div>
+          <div class="os-btn" onclick="selectOS(this,'Minecraft')">
+            <span class="os-icon">⛏️</span>Minecraft
+          </div>
+          <div class="os-btn" onclick="selectOS(this,'VPS Ubuntu')">
+            <span class="os-icon">🐧</span>Ubuntu
+          </div>
+          <div class="os-btn" onclick="selectOS(this,'Custom')">
+            <span class="os-icon">⚙️</span>Custom
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>DURASI LANGGANAN</label>
+        <select id="durasi">
+          <option value="1" data-mult="1">1 Bulan</option>
+          <option value="3" data-mult="2.8">3 Bulan (Hemat 7%)</option>
+          <option value="6" data-mult="5.5">6 Bulan (Hemat 8%)</option>
+          <option value="12" data-mult="10">12 Bulan (Hemat 16%)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>CATATAN TAMBAHAN (OPSIONAL)</label>
+        <textarea id="note" rows="3" placeholder="Misal: request custom port, egg khusus, dll..."></textarea>
+      </div>
+
+      <button class="btn btn-primary" onclick="submitOrder()">
+        ⚡ BUAT ORDER SEKARANG
+      </button>
+    </div>
+  </div>
+
+  <!-- RIGHT: SIDEBAR -->
+  <div class="sidebar">
+    <!-- Payment -->
+    <div class="payment-card">
+      <div class="card-header" style="margin-bottom:16px;">
+        <div class="card-icon">💳</div>
+        <div>
+          <div class="card-title">PEMBAYARAN</div>
+          <div class="card-subtitle">Transfer via DANA</div>
+        </div>
+      </div>
+
+      <div class="dana-badge">
+        <span>💙</span> DANA
+      </div>
+
+      <div class="dana-number" onclick="copyNumber()" title="Klik untuk copy">
+        <span>0877-6033-0230</span>
+        <span class="copy-icon">📋</span>
+      </div>
+      <div class="dana-name">a.n. <strong style="color:var(--text)">H**I N*R A**A F*****H</strong></div>
+
+      <ol class="pay-steps">
+        <li>
+          <div class="step-num">1</div>
+          <span>Pilih paket & isi form order di sebelah kiri</span>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <span>Klik <em style="color:var(--accent)">Buat Order</em>, catat ID ordermu</span>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <span>Transfer ke DANA <strong style="color:var(--accent)">087760330230</strong> sesuai total</span>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <span>Kirim bukti transfer + ID order ke WhatsApp admin</span>
+        </li>
+        <li>
+          <div class="step-num">5</div>
+          <span>Server aktif otomatis max <strong style="color:var(--success)">5 menit</strong> setelah konfirmasi 🚀</span>
+        </li>
+      </ol>
+    </div>
+
+    <!-- Summary -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">📊</div>
+        <div>
+          <div class="card-title">RINGKASAN ORDER</div>
+        </div>
+      </div>
+      <div class="summary-row">
+        <span class="label">Paket</span>
+        <span class="val" id="sum-paket">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="label">RAM</span>
+        <span class="val" id="sum-ram">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="label">OS / Egg</span>
+        <span class="val" id="sum-os">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="label">Durasi</span>
+        <span class="val" id="sum-dur">—</span>
+      </div>
+      <div class="summary-row" style="padding-top:14px; border-top: 1px solid rgba(0,212,255,0.2); margin-top:8px;">
+        <span class="label" style="font-size:15px; font-weight:700;">TOTAL</span>
+        <span class="val price" id="sum-total">Rp 0</span>
+      </div>
+    </div>
+
+    <!-- Keunggulan -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">✨</div>
+        <div>
+          <div class="card-title">KENAPA TIRZZ?</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;gap:10px;align-items:center;font-size:13px;">
+          <span style="font-size:20px;">⚡</span>
+          <span><strong style="color:var(--accent)">Instan Aktif</strong> — Server siap dalam 5 menit</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;font-size:13px;">
+          <span style="font-size:20px;">🛡️</span>
+          <span><strong style="color:var(--accent)">DDoS Protected</strong> — Server aman dari serangan</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;font-size:13px;">
+          <span style="font-size:20px;">💬</span>
+          <span><strong style="color:var(--accent)">Support 24/7</strong> — Admin siap bantu kapanpun</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;font-size:13px;">
+          <span style="font-size:20px;">🔄</span>
+          <span><strong style="color:var(--accent)">Backup Harian</strong> — Data selalu aman</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;font-size:13px;">
+          <span style="font-size:20px;">🌐</span>
+          <span><strong style="color:var(--accent)">Panel Pterodactyl</strong> — Manage server mudah</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer>
+  © 2026 <span>Tirzz Store</span> — Pterodactyl Auto Order Panel &nbsp;·&nbsp; Support: <span>WA 087769375859</span>
+</footer>
+
+<!-- TOAST -->
+<div id="toast">✓ Tersalin!</div>
+
+<!-- MODAL ORDER -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-icon">🚀</div>
+    <div class="modal-title" style="color:var(--success)">ORDER BERHASIL DIBUAT!</div>
+    <div class="modal-id" id="modalId">TRZ-000000</div>
+    <div class="modal-text" id="modalText">
+      Catat ID Order di atas, lalu transfer pembayaran ke DANA<br>
+      <strong style="color:var(--accent)">087760330230</strong><br>
+      dan kirim bukti ke WhatsApp admin.<br><br>
+      Server akan aktif dalam <strong style="color:var(--success)">≤ 5 menit</strong> setelah pembayaran dikonfirmasi.
+    </div>
+    <button class="modal-close" onclick="closeModal()">TUTUP &amp; LANJUT</button>
+  </div>
+</div>
+
+<script>
+  let selPkg = null, selOS = null;
+  const prices = {};
+
+  function selectPkg(el, name, ram, specs, priceStr) {
+    document.querySelectorAll('.pkg').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    selPkg = { name, ram, specs, price: parseInt(el.dataset.price) };
+    updateSummary();
+  }
+
+  function selectOS(el, os) {
+    document.querySelectorAll('.os-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    selOS = os;
+    updateSummary();
+  }
+
+  function updateSummary() {
+    const dur = document.getElementById('durasi');
+    const opt = dur.options[dur.selectedIndex];
+    const mult = parseFloat(opt.dataset.mult);
+    const months = parseInt(opt.value);
+
+    document.getElementById('sum-paket').textContent = selPkg ? selPkg.name : '—';
+    document.getElementById('sum-ram').textContent = selPkg ? selPkg.ram : '—';
+    document.getElementById('sum-os').textContent = selOS || '—';
+    document.getElementById('sum-dur').textContent = months + ' Bulan';
+
+    if (selPkg) {
+      const total = selPkg.price * mult;
+      document.getElementById('sum-total').textContent = 'Rp ' + Math.round(total).toLocaleString('id-ID');
+    } else {
+      document.getElementById('sum-total').textContent = 'Rp 0';
+    }
+  }
+
+  document.getElementById('durasi').addEventListener('change', updateSummary);
+
+  function submitOrder() {
+    const nama = document.getElementById('nama').value.trim();
+    const wa = document.getElementById('wa').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const server = document.getElementById('serverName').value.trim();
+
+    if (!nama) { alert('Masukkan nama lengkap!'); return; }
+    if (!wa) { alert('Masukkan nomor WhatsApp!'); return; }
+    if (!email) { alert('Masukkan email!'); return; }
+    if (!server) { alert('Masukkan nama server!'); return; }
+    if (!selPkg) { alert('Pilih paket server!'); return; }
+    if (!selOS) { alert('Pilih sistem operasi / egg!'); return; }
+
+    const id = 'TIRZZ-' + Math.random().toString(36).substr(2,6).toUpperCase();
+    document.getElementById('modalId').textContent = id;
+
+    const dur = document.getElementById('durasi');
+    const opt = dur.options[dur.selectedIndex];
+    const mult = parseFloat(opt.dataset.mult);
+    const total = selPkg.price * mult;
+
+    document.getElementById('modalText').innerHTML = `
+      <strong style="color:var(--text)">Nama:</strong> ${nama}<br>
+      <strong style="color:var(--text)">Paket:</strong> ${selPkg.name} (${selPkg.ram})<br>
+      <strong style="color:var(--text)">OS:</strong> ${selOS}<br>
+      <strong style="color:var(--text)">Total:</strong> <span style="color:var(--success)">Rp ${Math.round(total).toLocaleString('id-ID')}</span><br><br>
+      Transfer ke DANA <strong style="color:var(--accent)">087760330230</strong><br>
+      Kirim bukti + ID Order ke WA admin.<br><br>
+      Server aktif max <strong style="color:var(--success)">5 menit</strong> setelah konfirmasi 🚀
+    `;
+
+    document.getElementById('modalOverlay').classList.add('show');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('show');
+  }
+
+  function copyNumber() {
+    navigator.clipboard.writeText('087760330230').then(() => {
+      const t = document.getElementById('toast');
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    });
+  }
+
+  // Init select first package
+  window.addEventListener('DOMContentLoaded', () => {
+    updateSummary();
+  });
+</script>
+</body>
+</html>
